@@ -105,7 +105,7 @@ public:
     *
     * @param master_config / sub_config : configuration of the main/subordinate device
     */
-    void start_devices(const k4a_device_configuration_t& master_config, const k4a_device_configuration_t& sub_config)
+    void startDevices(const k4a_device_configuration_t& master_config, const k4a_device_configuration_t& sub_config)
     {
         try {
             // Start by starting all of the subordinate devices. They must be started before the master!
@@ -117,7 +117,7 @@ public:
             master_device.start_cameras(&master_config);
         }
         catch (k4a::error error) {
-            cout << "Start cameras failed with error : " << error.what() << endl;
+            std::cout << "Start cameras failed with error : " << error.what() << std::endl;
         }
     }
 
@@ -126,7 +126,7 @@ public:
     *
     * @param sub_config : config of the subordinate device
     */
-    std::vector<k4a::capture> get_synchronized_captures(const k4a_device_configuration_t& sub_config,
+    std::vector<k4a::capture> getSynchronizedCaptures(const k4a_device_configuration_t& sub_config,
         bool compare_sub_depth_instead_of_color = false)
     {
         // Dealing with the synchronized cameras is complex. The Azure Kinect DK:
@@ -164,25 +164,21 @@ public:
         ===================
         */
         try {
-            cout << "Capture master" << endl;
             if (!master_device.get_capture(&captures[current_index], std::chrono::milliseconds{ K4A_WAIT_INFINITE })) {
-                cout << "Master device get capture timed out" << endl;
+                std::cout << "Master device get capture timed out" << std::endl;
             }
             ++current_index;
 
-            cout << "End capture master" << endl;
-            cout << "Begin capture subordinate" << endl;
             for (k4a::device& d : subordinate_devices)
             {
                 if (!d.get_capture(&captures[current_index], std::chrono::milliseconds{ K4A_WAIT_INFINITE })) {
-                    cout << "Subordinate device get capture timed out" << endl;
+                    std::cout << "Subordinate device get capture timed out" << std::endl;
                 }
                 ++current_index;
             }
-            cout << "End capture subordinate" << endl;
         }
         catch (k4a::error error) {
-            cout << "Capture failed with error : " << error.what() << endl;
+            std::cout << "Capture failed with error : " << error.what() << std::endl;
         }
 
         // If there are no subordinate devices, just return captures which only has the master image
@@ -211,9 +207,6 @@ public:
 
             // We get the color image given by the master device
             k4a::image master_color_image = captures[0].get_color_image();
-            cout << "Master color image validity : " << master_color_image.is_valid() << endl;
-            cout << "Master depth image validity : " << captures[0].get_depth_image().is_valid() << endl;
-            cout << "Master ir image validity : " << captures[0].get_ir_image().is_valid() << endl;
             std::chrono::microseconds master_color_image_time = master_color_image.get_device_timestamp();
 
             // For each subordinate device
@@ -229,11 +222,6 @@ public:
                 {
                     sub_image = captures[i + 1].get_color_image(); // offset of 1 because master capture is at front
                 }
-
-                cout << "Subordinate color image validity : " << sub_image.is_valid() << endl;
-                cout << "Subordinate depth image validity : " << captures[i + 1].get_depth_image().is_valid() << endl;
-                cout << "Subordinate ir image validity : " << captures[i + 1].get_ir_image().is_valid() << endl;
-
                 // If we succesfully get the two images
                 if (master_color_image && sub_image)
                 {
@@ -312,7 +300,7 @@ public:
     *
     * @return the main device
     */
-    const k4a::device& get_master_device() const
+    const k4a::device& getMasterDevice() const
     {
         return master_device;
     }
@@ -323,7 +311,7 @@ public:
     * @param i : the index of the wanted device
     * @return the wanted subordinate device
     */
-    const k4a::device& get_subordinate_device_by_index(size_t i) const
+    const k4a::device& getSubordinateDeviceByIndex(size_t i) const
     {
         // devices[0] is the master. There are only devices.size() - 1 others. So, indices greater or equal are invalid
         if (i >= subordinate_devices.size())

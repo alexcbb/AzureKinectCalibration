@@ -13,11 +13,6 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::vector;
-
 #include "Transformation.h"
 #include "MultiDeviceCapturer.h"
 
@@ -128,7 +123,7 @@ static k4a::calibration construct_device_to_device_calibration(const k4a::calibr
 * @param cal : Azure kinect calibration
 * @return a vector containing the radial and tangential distortion coefficients
 */
-static vector<float> calibration_to_color_camera_dist_coeffs(const k4a::calibration& cal)
+static std::vector<float> calibration_to_color_camera_dist_coeffs(const k4a::calibration& cal)
 {
     const k4a_calibration_intrinsic_parameters_t::_param& i = cal.color_camera_calibration.intrinsics.parameters.param;
     return { i.k1, i.k2, i.p1, i.p2, i.k3, i.k4, i.k5, i.k6 };
@@ -145,8 +140,8 @@ static vector<float> calibration_to_color_camera_dist_coeffs(const k4a::calibrat
 bool find_chessboard_corners_helper(const cv::Mat& main_color_image,
     const cv::Mat& secondary_color_image,
     const cv::Size& chessboard_pattern,
-    vector<cv::Point2f>& main_chessboard_corners,
-    vector<cv::Point2f>& secondary_chessboard_corners)
+    std::vector<cv::Point2f>& main_chessboard_corners,
+    std::vector<cv::Point2f>& secondary_chessboard_corners)
 {
     bool found_chessboard_main = cv::findChessboardCorners(main_color_image,
         chessboard_pattern,
@@ -160,17 +155,17 @@ bool find_chessboard_corners_helper(const cv::Mat& main_color_image,
     {
         if (found_chessboard_main)
         {
-            cout << "Could not find the chessboard corners in the secondary image. Trying again...\n";
+            std::cout << "Could not find the chessboard corners in the secondary image. Trying again...\n";
         }
         // Likewise, if the chessboard was found in the secondary image, it was not found in the main image.
         else if (found_chessboard_secondary)
         {
-            cout << "Could not find the chessboard corners in the main image. Trying again...\n";
+            std::cout << "Could not find the chessboard corners in the main image. Trying again...\n";
         }
         // The only remaining case is the corners were in neither image.
         else
         {
-            cout << "Could not find the chessboard corners in either image. Trying again...\n";
+            std::cout << "Could not find the chessboard corners in either image. Trying again...\n";
         }
         return false;
     }
@@ -219,8 +214,8 @@ bool find_chessboard_corners_helper(const cv::Mat& main_color_image,
 */
 Transformation stereo_calibration(const k4a::calibration& main_calib,
     const k4a::calibration& secondary_calib,
-    const vector<vector<cv::Point2f>>& main_chessboard_corners_list,
-    const vector<vector<cv::Point2f>>& secondary_chessboard_corners_list,
+    const std::vector<std::vector<cv::Point2f>>& main_chessboard_corners_list,
+    const std::vector<std::vector<cv::Point2f>>& secondary_chessboard_corners_list,
     const cv::Size& image_size,
     const cv::Size& chessboard_pattern,
     float chessboard_square_length)
@@ -377,13 +372,13 @@ static Transformation calibrate_devices(MultiDeviceCapturer& capturer,
         capturer.get_subordinate_device_by_index(0).get_calibration(secondary_config.depth_mode,
             secondary_config.color_resolution);
 
-    vector<vector<cv::Point2f>> main_chessboard_corners_list;
-    vector<vector<cv::Point2f>> secondary_chessboard_corners_list;
+    std::vector<std::vector<cv::Point2f>> main_chessboard_corners_list;
+    std::vector<std::vector<cv::Point2f>> secondary_chessboard_corners_list;
 
     std::chrono::time_point<std::chrono::system_clock> start_time = std::chrono::system_clock::now();
     while (std::chrono::duration<double>(std::chrono::system_clock::now() - start_time).count() < calibration_timeout)
     {
-        vector<k4a::capture> captures = capturer.get_synchronized_captures(secondary_config);
+        std::vector<k4a::capture> captures = capturer.get_synchronized_captures(secondary_config);
         k4a::capture& main_capture = captures[0];
         k4a::capture& secondary_capture = captures[1];
         // get_color_image is guaranteed to be non-null because we use get_synchronized_captures for color
@@ -393,8 +388,8 @@ static Transformation calibrate_devices(MultiDeviceCapturer& capturer,
         cv::Mat cv_main_color_image = color_to_opencv(main_color_image);
         cv::Mat cv_secondary_color_image = color_to_opencv(secondary_color_image);
 
-        vector<cv::Point2f> main_chessboard_corners;
-        vector<cv::Point2f> secondary_chessboard_corners;
+        std::vector<cv::Point2f> main_chessboard_corners;
+        std::vector<cv::Point2f> secondary_chessboard_corners;
         bool got_corners = find_chessboard_corners_helper(cv_main_color_image,
             cv_secondary_color_image,
             chessboard_pattern,
@@ -471,17 +466,17 @@ int main(int argc, char** argv)
     on which one has sync out plugged in. Start with just { 0 }, and add
     another if needed
     */
-    vector<uint32_t> device_indices{ 0, 1 };
+    std::vector<uint32_t> device_indices{ 0, 1 };
 
     num_devices = 2;
     chessboard_pattern.height = 9;
     chessboard_pattern.width = 6;
     chessboard_square_length = 26;
 
-    cout << "Chessboard height: " << chessboard_pattern.height << ". Chessboard width: " << chessboard_pattern.width
-        << ". Chessboard square length: " << chessboard_square_length << endl;
-    cout << "Depth threshold: : " << depth_threshold << ". Color exposure time: " << color_exposure_usec
-        << ". Powerline frequency mode: " << powerline_freq << endl;
+    std::cout << "Chessboard height: " << chessboard_pattern.height << ". Chessboard width: " << chessboard_pattern.width
+        << ". Chessboard square length: " << chessboard_square_length << std::endl;
+    std::cout << "Depth threshold: : " << depth_threshold << ". Color exposure time: " << color_exposure_usec
+        << ". Powerline frequency mode: " << powerline_freq << std::endl;
 
     /*
     =======================
@@ -521,13 +516,13 @@ int main(int argc, char** argv)
     =======================
     */
     // get an image to be the background
-    vector<k4a::capture> background_captures = capturer.get_synchronized_captures(secondary_config);
+    std::vector<k4a::capture> background_captures = capturer.get_synchronized_captures(secondary_config);
     cv::Mat background_image = color_to_opencv(background_captures[0].get_color_image());
     cv::Mat output_image = background_image.clone(); // allocated outside the loop to avoid re-creating every time
 
     if (num_devices == 2)
     {
-        cout << "Calibration !" << endl;
+        std::cout << "Calibration !" << std::endl;
         // This wraps all the device-to-device details --> we got the transformation from one camera to another (use of cv::stereoCalibrate)
         Transformation tr_secondary_color_to_main_color = calibrate_devices(capturer,
             main_config,
@@ -569,7 +564,7 @@ int main(int argc, char** argv)
             greenscreen_duration)
         {
             // We get the captures
-            vector<k4a::capture> captures;
+            std::vector<k4a::capture> captures;
             captures = capturer.get_synchronized_captures(secondary_config, true);
             k4a::image main_color_image = captures[0].get_color_image();
             k4a::image main_depth_image = captures[0].get_depth_image();
@@ -604,7 +599,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        cerr << "Invalid number of devices!" << endl;
+        std::cerr << "Invalid number of devices!" << std::endl;
         exit(1);
     }
     return 0;
