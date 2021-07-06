@@ -1,6 +1,8 @@
 # AzureKinectCalibration
 Program that permits to calibrate Azure Kinect together
 
+Program based on the green screen example from Azure Kinect documentation : [Link to the repository](https://github.com/microsoft/Azure-Kinect-Sensor-SDK/tree/develop/examples/green_screen)
+
 Program only tested on Windows.
 
 To use the program : 
