@@ -26,7 +26,7 @@ constexpr uint32_t MIN_TIME_BETWEEN_DEPTH_CAMERA_PICTURES_USEC = 160;
 * @param im : Azure Kinect color image
 * @return color image to OpenCV format
 */
-static cv::Mat color_to_opencv(const k4a::image& im)
+static cv::Mat colorToOpencv(const k4a::image& im)
 {
     cv::Mat cv_image_with_alpha(im.get_height_pixels(), im.get_width_pixels(), CV_8UC4, (void*)im.get_buffer());
     cv::Mat cv_image_no_alpha;
@@ -39,7 +39,7 @@ static cv::Mat color_to_opencv(const k4a::image& im)
 * @param im : Azure Kinect depth image
 * @return depth image to OpenCV format
 */
-static cv::Mat depth_to_opencv(const k4a::image& im)
+static cv::Mat depthToOpencv(const k4a::image& im)
 {
     return cv::Mat(im.get_height_pixels(),
         im.get_width_pixels(),
@@ -53,7 +53,7 @@ static cv::Mat depth_to_opencv(const k4a::image& im)
 * @param cal : Azure Kinect calibration
 * @return calibration to OpenCV matrix format
 */
-static cv::Matx33f calibration_to_color_camera_matrix(const k4a::calibration& cal)
+static cv::Matx33f calibrationToColorCameraMatrix(const k4a::calibration& cal)
 {
     const k4a_calibration_intrinsic_parameters_t::_param& i = cal.color_camera_calibration.intrinsics.parameters.param;
     cv::Matx33f camera_matrix = cv::Matx33f::eye();
@@ -68,7 +68,7 @@ static cv::Matx33f calibration_to_color_camera_matrix(const k4a::calibration& ca
 * Get depth transformation to color transformation thanks to calibration
 * @param cal : Azure Kinect calibration
 */
-static Transformation get_depth_to_color_transformation_from_calibration(const k4a::calibration& cal)
+static Transformation getDepthToColorTransformationFromCalibration(const k4a::calibration& cal)
 {
     const k4a_calibration_extrinsics_t& ex = cal.extrinsics[K4A_CALIBRATION_TYPE_DEPTH][K4A_CALIBRATION_TYPE_COLOR];
     Transformation tr;
@@ -96,7 +96,7 @@ static Transformation get_depth_to_color_transformation_from_calibration(const k
 * @param secondary_to_main : transformation from the secondary device to the main
 * @return calibration between the secondary and mai ndevice
 */
-static k4a::calibration construct_device_to_device_calibration(const k4a::calibration& main_cal,
+static k4a::calibration constructDeviceToDeviceCalibration(const k4a::calibration& main_cal,
     const k4a::calibration& secondary_cal,
     const Transformation& secondary_to_main)
 {
@@ -123,7 +123,7 @@ static k4a::calibration construct_device_to_device_calibration(const k4a::calibr
 * @param cal : Azure kinect calibration
 * @return a vector containing the radial and tangential distortion coefficients
 */
-static std::vector<float> calibration_to_color_camera_dist_coeffs(const k4a::calibration& cal)
+static std::vector<float> calibrationToColorCameraDistCoeffs(const k4a::calibration& cal)
 {
     const k4a_calibration_intrinsic_parameters_t::_param& i = cal.color_camera_calibration.intrinsics.parameters.param;
     return { i.k1, i.k2, i.p1, i.p2, i.k3, i.k4, i.k5, i.k6 };
@@ -137,7 +137,7 @@ static std::vector<float> calibration_to_color_camera_dist_coeffs(const k4a::cal
 * @param main_chessboard_corners / secondary_chessboard_corners : vector containing the positions of the corners of the chessboard in the main/secondary im
 * @return a boolean indicating if the corner where found or not
 */
-bool find_chessboard_corners_helper(const cv::Mat& main_color_image,
+bool findChessboardCornersHelper(const cv::Mat& main_color_image,
     const cv::Mat& secondary_color_image,
     const cv::Size& chessboard_pattern,
     std::vector<cv::Point2f>& main_chessboard_corners,
@@ -212,7 +212,7 @@ bool find_chessboard_corners_helper(const cv::Mat& main_color_image,
 * @param chessboard_pattern : size of the chessboard
 * @param chessboard_square_length : size of the border of a square in the chessboard
 */
-Transformation stereo_calibration(const k4a::calibration& main_calib,
+Transformation stereoCalibration(const k4a::calibration& main_calib,
     const k4a::calibration& secondary_calib,
     const std::vector<std::vector<cv::Point2f>>& main_chessboard_corners_list,
     const std::vector<std::vector<cv::Point2f>>& secondary_chessboard_corners_list,
@@ -228,7 +228,7 @@ Transformation stereo_calibration(const k4a::calibration& main_calib,
     // order of points inserted into the vector here matches the ordering of findChessboardCorners. The units of these
     // points are in millimeters, mostly because the depth provided by the depth cameras is also provided in
     // millimeters, which makes for easy comparison.
-    vector<cv::Point3f> chessboard_corners_world;
+    std::vector<cv::Point3f> chessboard_corners_world;
     for (int h = 0; h < chessboard_pattern.height; ++h)
     {
         for (int w = 0; w < chessboard_pattern.width; ++w)
@@ -261,13 +261,13 @@ Transformation stereo_calibration(const k4a::calibration& main_calib,
     //
     // A function in OpenCV's calibration function also requires that these points be F32 types, so we use those.
     // However, OpenCV still provides doubles as output, strangely enough.
-    vector<vector<cv::Point3f>> chessboard_corners_world_nested_for_cv(main_chessboard_corners_list.size(),
+    std::vector<std::vector<cv::Point3f>> chessboard_corners_world_nested_for_cv(main_chessboard_corners_list.size(),
         chessboard_corners_world);
 
-    cv::Matx33f main_camera_matrix = calibration_to_color_camera_matrix(main_calib);
-    cv::Matx33f secondary_camera_matrix = calibration_to_color_camera_matrix(secondary_calib);
-    vector<float> main_dist_coeff = calibration_to_color_camera_dist_coeffs(main_calib);
-    vector<float> secondary_dist_coeff = calibration_to_color_camera_dist_coeffs(secondary_calib);
+    cv::Matx33f main_camera_matrix = calibrationToColorCameraMatrix(main_calib);
+    cv::Matx33f secondary_camera_matrix = calibrationToColorCameraMatrix(secondary_calib);
+    std::vector<float> main_dist_coeff = calibrationToColorCameraDistCoeffs(main_calib);
+    std::vector<float> secondary_dist_coeff = calibrationToColorCameraDistCoeffs(secondary_calib);
 
     // Finally, we'll actually calibrate the cameras.
     // Pass secondary first, then main, because we want a transform from secondary to main.
@@ -285,8 +285,8 @@ Transformation stereo_calibration(const k4a::calibration& main_calib,
         cv::noArray(),
         cv::noArray(),
         cv::CALIB_FIX_INTRINSIC | cv::CALIB_RATIONAL_MODEL | cv::CALIB_CB_FAST_CHECK);
-    cout << "Finished calibrating!\n";
-    cout << "Got error of " << error << "\n";
+    std::cout << "Finished calibrating!\n";
+    std::cout << "Got error of " << error << "\n";
     return tr;
 }
 
@@ -300,7 +300,7 @@ Transformation stereo_calibration(const k4a::calibration& main_calib,
 * time) - (master exposure time))/2`.
 *
 */
-static k4a_device_configuration_t get_default_config()
+static k4a_device_configuration_t getDefaultConfig()
 {
     k4a_device_configuration_t camera_config = K4A_DEVICE_CONFIG_INIT_DISABLE_ALL;
     camera_config.color_format = K4A_IMAGE_FORMAT_COLOR_BGRA32;
@@ -315,9 +315,9 @@ static k4a_device_configuration_t get_default_config()
 /**
 *  Master customizable settings
 */
-static k4a_device_configuration_t get_master_config()
+static k4a_device_configuration_t getMasterConfig()
 {
-    k4a_device_configuration_t camera_config = get_default_config();
+    k4a_device_configuration_t camera_config = getDefaultConfig();
     camera_config.wired_sync_mode = K4A_WIRED_SYNC_MODE_MASTER;
 
     // Two depth images should be seperated by MIN_TIME_BETWEEN_DEPTH_CAMERA_PICTURES_USEC to ensure the depth imaging
@@ -333,9 +333,9 @@ static k4a_device_configuration_t get_master_config()
 /**
 *  Subordinate customizable settings
 */
-static k4a_device_configuration_t get_subordinate_config()
+static k4a_device_configuration_t getSubordinateConfig()
 {
-    k4a_device_configuration_t camera_config = get_default_config();
+    k4a_device_configuration_t camera_config = getDefaultConfig();
     camera_config.wired_sync_mode = K4A_WIRED_SYNC_MODE_SUBORDINATE;
 
     // Two depth images should be seperated by MIN_TIME_BETWEEN_DEPTH_CAMERA_PICTURES_USEC to ensure the depth imaging
@@ -357,7 +357,7 @@ static k4a_device_configuration_t get_subordinate_config()
 * @param calibration_timeout :
 * @return
 */
-static Transformation calibrate_devices(MultiDeviceCapturer& capturer,
+static Transformation calibrateDevices(MultiDeviceCapturer& capturer,
     const k4a_device_configuration_t& main_config,
     const k4a_device_configuration_t& secondary_config,
     const cv::Size& chessboard_pattern,
@@ -365,11 +365,11 @@ static Transformation calibrate_devices(MultiDeviceCapturer& capturer,
     double calibration_timeout)
 {
     // We first get the cameras calibrations
-    k4a::calibration main_calibration = capturer.get_master_device().get_calibration(main_config.depth_mode,
+    k4a::calibration main_calibration = capturer.getMasterDevice().get_calibration(main_config.depth_mode,
         main_config.color_resolution);
 
     k4a::calibration secondary_calibration =
-        capturer.get_subordinate_device_by_index(0).get_calibration(secondary_config.depth_mode,
+        capturer.getSubordinateDeviceByIndex(0).get_calibration(secondary_config.depth_mode,
             secondary_config.color_resolution);
 
     std::vector<std::vector<cv::Point2f>> main_chessboard_corners_list;
@@ -378,19 +378,19 @@ static Transformation calibrate_devices(MultiDeviceCapturer& capturer,
     std::chrono::time_point<std::chrono::system_clock> start_time = std::chrono::system_clock::now();
     while (std::chrono::duration<double>(std::chrono::system_clock::now() - start_time).count() < calibration_timeout)
     {
-        std::vector<k4a::capture> captures = capturer.get_synchronized_captures(secondary_config);
+        std::vector<k4a::capture> captures = capturer.getSynchronizedCaptures(secondary_config);
         k4a::capture& main_capture = captures[0];
         k4a::capture& secondary_capture = captures[1];
         // get_color_image is guaranteed to be non-null because we use get_synchronized_captures for color
         // (get_synchronized_captures also offers a flag to use depth for the secondary camera instead of color).
         k4a::image main_color_image = main_capture.get_color_image();
         k4a::image secondary_color_image = secondary_capture.get_color_image();
-        cv::Mat cv_main_color_image = color_to_opencv(main_color_image);
-        cv::Mat cv_secondary_color_image = color_to_opencv(secondary_color_image);
+        cv::Mat cv_main_color_image = colorToOpencv(main_color_image);
+        cv::Mat cv_secondary_color_image = colorToOpencv(secondary_color_image);
 
         std::vector<cv::Point2f> main_chessboard_corners;
         std::vector<cv::Point2f> secondary_chessboard_corners;
-        bool got_corners = find_chessboard_corners_helper(cv_main_color_image,
+        bool got_corners = findChessboardCornersHelper(cv_main_color_image,
             cv_secondary_color_image,
             chessboard_pattern,
             main_chessboard_corners,
@@ -411,7 +411,7 @@ static Transformation calibrate_devices(MultiDeviceCapturer& capturer,
         // Get 20 frames before doing calibration.
         if (main_chessboard_corners_list.size() >= 20)
         {
-            return stereo_calibration(main_calibration,
+            return stereoCalibration(main_calibration,
                 secondary_calibration,
                 main_chessboard_corners_list,
                 secondary_chessboard_corners_list,
@@ -424,7 +424,7 @@ static Transformation calibrate_devices(MultiDeviceCapturer& capturer,
     exit(1);
 }
 
-static k4a::image create_depth_image_like(const k4a::image& im)
+static k4a::image createDepthImageLike(const k4a::image& im)
 {
     return k4a::image::create(K4A_IMAGE_FORMAT_DEPTH16,
         im.get_width_pixels(),
@@ -487,15 +487,15 @@ int main(int argc, char** argv)
 
 
     // Create configurations for devices
-    k4a_device_configuration_t main_config = get_master_config();
+    k4a_device_configuration_t main_config = getMasterConfig();
     if (num_devices == 1) // no need to have a master cable if it's standalone
     {
         main_config.wired_sync_mode = K4A_WIRED_SYNC_MODE_STANDALONE;
     }
-    k4a_device_configuration_t secondary_config = get_subordinate_config();
+    k4a_device_configuration_t secondary_config = getSubordinateConfig();
 
     // Construct all the things that we'll need whether or not we are running with 1 or 2 cameras
-    k4a::calibration main_calibration = capturer.get_master_device().get_calibration(main_config.depth_mode,
+    k4a::calibration main_calibration = capturer.getMasterDevice().get_calibration(main_config.depth_mode,
         main_config.color_resolution);
 
     // Set up a transformation. DO THIS OUTSIDE OF YOUR MAIN LOOP! Constructing transformations involves time-intensive
@@ -508,7 +508,7 @@ int main(int argc, char** argv)
      START DEVICES
     =======================
     */
-    capturer.start_devices(main_config, secondary_config);
+    capturer.startDevices(main_config, secondary_config);
 
     /*
     =======================
@@ -516,70 +516,72 @@ int main(int argc, char** argv)
     =======================
     */
     // get an image to be the background
-    std::vector<k4a::capture> background_captures = capturer.get_synchronized_captures(secondary_config);
-    cv::Mat background_image = color_to_opencv(background_captures[0].get_color_image());
+    std::vector<k4a::capture> background_captures = capturer.getSynchronizedCaptures(secondary_config);
+    cv::Mat background_image = colorToOpencv(background_captures[0].get_color_image());
     cv::Mat output_image = background_image.clone(); // allocated outside the loop to avoid re-creating every time
 
     if (num_devices == 2)
     {
         std::cout << "Calibration !" << std::endl;
         // This wraps all the device-to-device details --> we got the transformation from one camera to another (use of cv::stereoCalibrate)
-        Transformation tr_secondary_color_to_main_color = calibrate_devices(capturer,
+        Transformation trSecondaryColorToMainColor = calibrateDevices(capturer,
             main_config,
             secondary_config,
             chessboard_pattern,
             chessboard_square_length,
             calibration_timeout);
-        std::cout << "Rotation matrix : " << tr_secondary_color_to_main_color.R << std::endl;
-        std::cout << "Position vector : " << tr_secondary_color_to_main_color.t << std::endl;
+        std::cout << "Rotation matrix : " << trSecondaryColorToMainColor.R << std::endl;
+        std::cout << "Position vector : " << trSecondaryColorToMainColor.t << std::endl;
 
+        /*
         k4a::calibration secondary_calibration =
-            capturer.get_subordinate_device_by_index(0).get_calibration(secondary_config.depth_mode,
+            capturer.getSubordinateDeviceByIndex(0).get_calibration(secondary_config.depth_mode,
                 secondary_config.color_resolution);
         // Get the transformation from secondary depth to secondary color using its calibration object
-        Transformation tr_secondary_depth_to_secondary_color = get_depth_to_color_transformation_from_calibration(
+        Transformation tr_secondary_depth_to_secondary_color = getDepthToColorTransformationFromCalibration(
             secondary_calibration);
 
         // We now have the secondary depth to secondary color transform. We also have the transformation from the
         // secondary color perspective to the main color perspective from the calibration earlier. Now let's compose the
         // depth secondary -> color secondary, color secondary -> color main into depth secondary -> color main
         Transformation tr_secondary_depth_to_main_color = tr_secondary_depth_to_secondary_color.compose_with(
-            tr_secondary_color_to_main_color);
+            trSecondaryColorToMainColor);
 
         // Construct a new calibration object to transform from the secondary depth camera to the main color camera
         k4a::calibration secondary_depth_to_main_color_cal =
-            construct_device_to_device_calibration(main_calibration,
+            constructDeviceToDeviceCalibration(main_calibration,
                 secondary_calibration,
                 tr_secondary_depth_to_main_color);
         k4a::transformation secondary_depth_to_main_color(secondary_depth_to_main_color_cal);
 
         std::chrono::time_point<std::chrono::system_clock> start_time = std::chrono::system_clock::now();
-
+        */
         /*
         ================
         EXAMPLE OF USE OF THE CALIBRATION
         ================
         */
+        /*
         while (std::chrono::duration<double>(std::chrono::system_clock::now() - start_time).count() <
             greenscreen_duration)
         {
             // We get the captures
             std::vector<k4a::capture> captures;
-            captures = capturer.get_synchronized_captures(secondary_config, true);
+            captures = capturer.getSynchronizedCaptures(secondary_config, true);
             k4a::image main_color_image = captures[0].get_color_image();
             k4a::image main_depth_image = captures[0].get_depth_image();
 
-            k4a::image main_depth_in_main_color = create_depth_image_like(main_color_image);
+            k4a::image main_depth_in_main_color = createDepthImageLike(main_color_image);
             main_depth_to_main_color.depth_image_to_color_camera(main_depth_image, &main_depth_in_main_color);
-            cv::Mat cv_main_depth_in_main_color = depth_to_opencv(main_depth_in_main_color);
-            cv::Mat cv_main_color_image = color_to_opencv(main_color_image);
+            cv::Mat cv_main_depth_in_main_color = depthToOpencv(main_depth_in_main_color);
+            cv::Mat cv_main_color_image = colorToOpencv(main_color_image);
 
             k4a::image secondary_depth_image = captures[1].get_depth_image();
 
-            k4a::image secondary_depth_in_main_color = create_depth_image_like(main_color_image);
+            k4a::image secondary_depth_in_main_color = createDepthImageLike(main_color_image);
             secondary_depth_to_main_color.depth_image_to_color_camera(secondary_depth_image,
                 &secondary_depth_in_main_color);
-            cv::Mat cv_secondary_depth_in_main_color = depth_to_opencv(secondary_depth_in_main_color);
+            cv::Mat cv_secondary_depth_in_main_color = depthToOpencv(secondary_depth_in_main_color);
 
 
             cv::Mat main_valid_mask = cv_main_depth_in_main_color != 0;
@@ -595,7 +597,7 @@ int main(int argc, char** argv)
 
             cv::imshow("Green Screen", output_image);
             cv::waitKey(1);
-        }
+        }*/
     }
     else
     {

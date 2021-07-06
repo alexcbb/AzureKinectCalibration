@@ -26,6 +26,10 @@ static void log_synced_image_time(k4a::capture& master, k4a::capture& sub)
         << "us sc:" << std::setw(6) << sub.get_color_image().get_device_timestamp().count() << "us\n";
 }
 
+/**
+* Class Multi
+*/
+
 class MultiDeviceCapturer
 {
 public:
@@ -88,7 +92,7 @@ public:
 
             }
             catch (k4a::error error) {
-                cout << "MultiDevice construction failed with error : " << error.what() << endl;
+                std::cout << "MultiDevice construction failed with error : " << error.what() << std::endl;
             }
         }
 

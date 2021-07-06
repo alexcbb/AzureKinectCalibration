@@ -12,6 +12,8 @@ struct Transformation
     // Construct an identity transformation.
     Transformation() : R(cv::Matx33d::eye()), t(0., 0., 0.) {}
 
+    Transformation(cv::Matx33d Rot, cv::Vec3d trans) : R(Rot), t(trans) {}
+
     // Construct from H
     Transformation(const cv::Matx44d& H) : R(H.get_minor<3, 3>(0, 0)), t(H(0, 3), H(1, 3), H(2, 3)) {}
 
