@@ -13,6 +13,7 @@ public:
 	void registerTransformationIntoFile(int deviceIndex, cv::Matx33d R, cv::Vec3d t);
 	void resetFile();
 	std::vector<Transformation> getTransformationsFromFile();
+	std::tuple<std::vector<float>, std::tuple<float, float, float>> getRotAndTransFromFile();
 private:
 	std::string filePath;
 	std::string fileName;

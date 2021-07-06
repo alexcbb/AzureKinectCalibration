@@ -15,6 +15,7 @@
 
 #include "Transformation.h"
 #include "MultiDeviceCapturer.h"
+#include "FileHandler.h"
 
 // Allowing at least 160 microseconds between depth cameras should ensure they do not interfere with one another.
 constexpr uint32_t MIN_TIME_BETWEEN_DEPTH_CAMERA_PICTURES_USEC = 160;
@@ -440,10 +441,6 @@ static k4a::image createDepthImageLike(const k4a::image& im)
 int main(int argc, char** argv)
 {
     /*
-    ==================
-     HANDLE PARAMETERS
-    ==================
-    */
     float chessboard_square_length = 0.;
     // somewhat reasonable default exposure time
     int32_t color_exposure_usec = 8000;
@@ -466,6 +463,7 @@ int main(int argc, char** argv)
     on which one has sync out plugged in. Start with just { 0 }, and add
     another if needed
     */
+    /*
     std::vector<uint32_t> device_indices{ 0, 1 };
 
     num_devices = 2;
@@ -478,11 +476,6 @@ int main(int argc, char** argv)
     std::cout << "Depth threshold: : " << depth_threshold << ". Color exposure time: " << color_exposure_usec
         << ". Powerline frequency mode: " << powerline_freq << std::endl;
 
-    /*
-    =======================
-     OPEN/CONFIGURE DEVICES
-    =======================
-    */
     MultiDeviceCapturer capturer(device_indices, color_exposure_usec, powerline_freq);
 
 
@@ -503,18 +496,8 @@ int main(int argc, char** argv)
     // slowly.
     k4a::transformation main_depth_to_main_color(main_calibration);
 
-    /*
-    =======================
-     START DEVICES
-    =======================
-    */
     capturer.startDevices(main_config, secondary_config);
 
-    /*
-    =======================
-     GET CAPTURES
-    =======================
-    */
     // get an image to be the background
     std::vector<k4a::capture> background_captures = capturer.getSynchronizedCaptures(secondary_config);
     cv::Mat background_image = colorToOpencv(background_captures[0].get_color_image());
@@ -532,77 +515,22 @@ int main(int argc, char** argv)
             calibration_timeout);
         std::cout << "Rotation matrix : " << trSecondaryColorToMainColor.R << std::endl;
         std::cout << "Position vector : " << trSecondaryColorToMainColor.t << std::endl;
-
-        /*
-        k4a::calibration secondary_calibration =
-            capturer.getSubordinateDeviceByIndex(0).get_calibration(secondary_config.depth_mode,
-                secondary_config.color_resolution);
-        // Get the transformation from secondary depth to secondary color using its calibration object
-        Transformation tr_secondary_depth_to_secondary_color = getDepthToColorTransformationFromCalibration(
-            secondary_calibration);
-
-        // We now have the secondary depth to secondary color transform. We also have the transformation from the
-        // secondary color perspective to the main color perspective from the calibration earlier. Now let's compose the
-        // depth secondary -> color secondary, color secondary -> color main into depth secondary -> color main
-        Transformation tr_secondary_depth_to_main_color = tr_secondary_depth_to_secondary_color.compose_with(
-            trSecondaryColorToMainColor);
-
-        // Construct a new calibration object to transform from the secondary depth camera to the main color camera
-        k4a::calibration secondary_depth_to_main_color_cal =
-            constructDeviceToDeviceCalibration(main_calibration,
-                secondary_calibration,
-                tr_secondary_depth_to_main_color);
-        k4a::transformation secondary_depth_to_main_color(secondary_depth_to_main_color_cal);
-
-        std::chrono::time_point<std::chrono::system_clock> start_time = std::chrono::system_clock::now();
-        */
-        /*
-        ================
-        EXAMPLE OF USE OF THE CALIBRATION
-        ================
-        */
-        /*
-        while (std::chrono::duration<double>(std::chrono::system_clock::now() - start_time).count() <
-            greenscreen_duration)
-        {
-            // We get the captures
-            std::vector<k4a::capture> captures;
-            captures = capturer.getSynchronizedCaptures(secondary_config, true);
-            k4a::image main_color_image = captures[0].get_color_image();
-            k4a::image main_depth_image = captures[0].get_depth_image();
-
-            k4a::image main_depth_in_main_color = createDepthImageLike(main_color_image);
-            main_depth_to_main_color.depth_image_to_color_camera(main_depth_image, &main_depth_in_main_color);
-            cv::Mat cv_main_depth_in_main_color = depthToOpencv(main_depth_in_main_color);
-            cv::Mat cv_main_color_image = colorToOpencv(main_color_image);
-
-            k4a::image secondary_depth_image = captures[1].get_depth_image();
-
-            k4a::image secondary_depth_in_main_color = createDepthImageLike(main_color_image);
-            secondary_depth_to_main_color.depth_image_to_color_camera(secondary_depth_image,
-                &secondary_depth_in_main_color);
-            cv::Mat cv_secondary_depth_in_main_color = depthToOpencv(secondary_depth_in_main_color);
-
-
-            cv::Mat main_valid_mask = cv_main_depth_in_main_color != 0;
-            cv::Mat secondary_valid_mask = cv_secondary_depth_in_main_color != 0;
-
-            cv::Mat within_threshold_range = (main_valid_mask & (cv_main_depth_in_main_color < depth_threshold)) |
-                (~main_valid_mask & secondary_valid_mask &
-                    (cv_secondary_depth_in_main_color < depth_threshold));
-
-            cv_main_color_image.copyTo(output_image, within_threshold_range);
-
-            background_image.copyTo(output_image, ~within_threshold_range);
-
-            cv::imshow("Green Screen", output_image);
-            cv::waitKey(1);
-        }*/
     }
     else
     {
         std::cerr << "Invalid number of devices!" << std::endl;
         exit(1);
+    }*/
+    FileHandler fileHandler(".\\", "file");
+
+    fileHandler.registerTransformationIntoFile(0, Transformation());
+    std::vector<Transformation> result = fileHandler.getTransformationsFromFile();
+    int index = 0;
+    for (const Transformation& trans : result) {
+        std::cout << "Index device : " << index++ << std::endl;
+        std::cout << "Rotation matrix : " << trans.R << std::endl;
+        std::cout << "Translation vector : " << trans.t << std::endl;
     }
+
     return 0;
 }

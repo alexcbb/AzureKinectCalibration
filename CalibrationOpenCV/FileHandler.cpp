@@ -68,3 +68,8 @@ std::vector<Transformation> FileHandler::getTransformationsFromFile() {
 	}
 	return result;
 }
+
+
+std::tuple<std::vector<float>, std::tuple<float, float, float>> FileHandler::getRotAndTransFromFile() {
+
+}
