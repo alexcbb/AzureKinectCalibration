@@ -438,54 +438,30 @@ static k4a::image createDepthImageLike(const k4a::image& im)
 ===================================================
 **              MAIN FUNCTION                    **
 ===================================================
+
+Should be launched with command line with following arguments :
+
+argv[1] --> number of connected devices
 */
 int main(int argc, char** argv)
 {
-    /*
-    float chessboard_square_length = 0.;
-    // somewhat reasonable default exposure time
+    float chessboard_square_length = 26;
     int32_t color_exposure_usec = 8000;
-    // default to a 60 Hz powerline
     int32_t powerline_freq = 2;
-    // height, width. Both need to be set.
-    cv::Size chessboard_pattern(0, 0);
-    // default to 1 meter
-    uint16_t depth_threshold = 1000;
-    size_t num_devices = 0;
-    // default to timing out after 60s of trying to get calibrated
+    cv::Size chessboard_pattern(6, 9);
     double calibration_timeout = 60.0;
-    // run forever
-    double greenscreen_duration = std::numeric_limits<double>::max();
+    size_t num_devices = static_cast<size_t>(std::atoi(argv[1]));
 
-    /*
-    Set up a MultiDeviceCapturer to handle getting many synchronous captures
-    Note that the order of indices in device_indices is not necessarily
-    preserved because MultiDeviceCapturer tries to find the master device based
-    on which one has sync out plugged in. Start with just { 0 }, and add
-    another if needed
-    */
-    /*
-    std::vector<uint32_t> device_indices{ 0, 1 };
+    std::vector<uint32_t> device_indices;
+    for (uint32_t i = 0; i < num_devices; i++) {
+        device_indices.push_back(i);
+    }
 
-    num_devices = 2;
-    chessboard_pattern.height = 9;
-    chessboard_pattern.width = 6;
-    chessboard_square_length = 26;
-
-    std::cout << "Chessboard height: " << chessboard_pattern.height << ". Chessboard width: " << chessboard_pattern.width
-        << ". Chessboard square length: " << chessboard_square_length << std::endl;
-    std::cout << "Depth threshold: : " << depth_threshold << ". Color exposure time: " << color_exposure_usec
-        << ". Powerline frequency mode: " << powerline_freq << std::endl;
-
+    // Open each of the existing devices
     MultiDeviceCapturer capturer(device_indices, color_exposure_usec, powerline_freq);
 
-
-    // Create configurations for devices
+    // Create configurations for the different devices
     k4a_device_configuration_t main_config = getMasterConfig();
-    if (num_devices == 1) // no need to have a master cable if it's standalone
-    {
-        main_config.wired_sync_mode = K4A_WIRED_SYNC_MODE_STANDALONE;
-    }
     k4a_device_configuration_t secondary_config = getSubordinateConfig();
 
     // Construct all the things that we'll need whether or not we are running with 1 or 2 cameras
@@ -508,7 +484,7 @@ int main(int argc, char** argv)
     {
         std::cout << "Calibration !" << std::endl;
         // This wraps all the device-to-device details --> we got the transformation from one camera to another (use of cv::stereoCalibrate)
-        Transformation trSecondaryColorToMainColor = calibrateDevices(capturer,
+        TransformationOpenCV trSecondaryColorToMainColor = calibrateDevices(capturer,
             main_config,
             secondary_config,
             chessboard_pattern,
@@ -521,51 +497,6 @@ int main(int argc, char** argv)
     {
         std::cerr << "Invalid number of devices!" << std::endl;
         exit(1);
-    }*/
-    FileHandler fileHandler(".\\", "file");
-    fileHandler.resetFile();
-    fileHandler.registerTransformationIntoFile(0, TransformationOpenCV());
-    fileHandler.registerTransformationIntoFile(0, TransformationOpenCV(
-        cv::Matx33d(22, 10, -97, 
-            13, -25, 54, 
-            178, 245, -25), 
-        cv::Vec3d(12, 1.83, -6.37)
-    ));
-
-    fileHandler.registerTransformationIntoFile(0, TransformationOpenCV(
-        cv::Matx33d(1, 82, -97,
-            10, 20, 54,
-            14, 24, 25),
-        cv::Vec3d(2, 3, 6)
-    ));
-    //fileHandler.resetFile();
-    std::vector<TransformationOpenCV> result = fileHandler.getOpenCVTransformationsFromFile();
-    int index = 0;
-    std::cout << "OPENCV TRANSFORM" << std::endl;
-    for (const TransformationOpenCV& trans : result) {
-        std::cout << "Index device : " << index++ << std::endl;
-        std::cout << "Rotation matrix : " << trans.R << std::endl;
-        std::cout << "Translation vector : " << trans.t << std::endl;
-    }
-
-    std::cout << "" << std::endl;
-    std::cout << "" << std::endl;
-    std::cout << "" << std::endl;
-
-    index = 0;
-    std::cout << "CLASSIC TRANSFORM" << std::endl;
-    std::vector<Transformation> result2 = fileHandler.getTransformationsFromFile();
-    for (auto& const value : result2) {
-        std::cout << "Index device : " << index++ << std::endl;
-        std::cout << "Rotation matrix :";
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                std::cout << " " << value.R[i][j];
-            }
-        }
-        std::cout << std::endl;
-
-        std::cout << "Translation vector : " << value.t[0] << " " << value.t[1] << " " << value.t[2] << std::endl;
     }
 
     return 0;
