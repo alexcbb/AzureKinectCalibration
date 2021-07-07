@@ -8,10 +8,11 @@
 class FileHandler
 {
 public:
+	FileHandler() : filePath(".\\"), fileName("file") {};
 	FileHandler(std::string filePath, std::string fileName);
 
-	void registerTransformationIntoFile(int deviceIndex, TransformationOpenCV tr);
-	void registerTransformationIntoFile(int deviceIndex, cv::Matx33d R, cv::Vec3d t);
+	void registerTransformationIntoFile(TransformationOpenCV tr);
+	void registerTransformationIntoFile(cv::Matx33d R, cv::Vec3d t);
 	void resetFile();
 
 	/**
@@ -28,6 +29,15 @@ public:
 	* the vector of translation (which is a tuple containing 3 values : [tx, ty, tz])
 	*/
 	std::vector<Transformation> getTransformationsFromFile();
+
+	void setFilePath(std::string filePath) {
+		this->filePath = filePath;
+	}
+
+	void setFileName(std::string fileName) {
+		this->fileName = fileName;
+	}
+
 private:
 	std::string filePath;
 	std::string fileName;

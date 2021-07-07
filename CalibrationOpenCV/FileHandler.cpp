@@ -2,7 +2,7 @@
 
 FileHandler::FileHandler(std::string filePath, std::string fileName) : filePath(filePath), fileName(fileName) {}
 
-void FileHandler::registerTransformationIntoFile(int deviceIndex, TransformationOpenCV tr) {
+void FileHandler::registerTransformationIntoFile(TransformationOpenCV tr) {
 	// ios::app permits to just add the datas after the one already written into the file 
 	std::ofstream file(filePath + "\\" + fileName + ".txt", std::ios::app);
 	if (file.is_open()) {
@@ -19,8 +19,8 @@ void FileHandler::registerTransformationIntoFile(int deviceIndex, Transformation
 	}
 }
 
-void FileHandler::registerTransformationIntoFile(int deviceIndex, cv::Matx33d R, cv::Vec3d t) {
-	this->registerTransformationIntoFile(deviceIndex, TransformationOpenCV(R, t));
+void FileHandler::registerTransformationIntoFile(cv::Matx33d R, cv::Vec3d t) {
+	this->registerTransformationIntoFile(TransformationOpenCV(R, t));
 }
 
 
@@ -68,7 +68,6 @@ std::vector<TransformationOpenCV> FileHandler::getOpenCVTransformationsFromFile(
 	}
 	return result;
 }
-
 
 std::vector<Transformation> FileHandler::getTransformationsFromFile() {
 	std::vector<Transformation> result;
