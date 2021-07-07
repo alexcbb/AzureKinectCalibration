@@ -154,6 +154,7 @@
     <ClInclude Include="FileHandler.h" />
     <ClInclude Include="MultiDeviceCapturer.h" />
     <ClInclude Include="Transformation.h" />
+    <ClInclude Include="TransformationOpenCV.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FileHandler.cpp" />

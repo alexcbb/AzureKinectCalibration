@@ -13,6 +13,7 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 
+#include "TransformationOpenCV.h"
 #include "Transformation.h"
 #include "MultiDeviceCapturer.h"
 #include "FileHandler.h"
@@ -69,10 +70,10 @@ static cv::Matx33f calibrationToColorCameraMatrix(const k4a::calibration& cal)
 * Get depth transformation to color transformation thanks to calibration
 * @param cal : Azure Kinect calibration
 */
-static Transformation getDepthToColorTransformationFromCalibration(const k4a::calibration& cal)
+static TransformationOpenCV getDepthToColorTransformationFromCalibration(const k4a::calibration& cal)
 {
     const k4a_calibration_extrinsics_t& ex = cal.extrinsics[K4A_CALIBRATION_TYPE_DEPTH][K4A_CALIBRATION_TYPE_COLOR];
-    Transformation tr;
+    TransformationOpenCV tr;
     for (int i = 0; i < 3; ++i)
     {
         for (int j = 0; j < 3; ++j)
@@ -99,7 +100,7 @@ static Transformation getDepthToColorTransformationFromCalibration(const k4a::ca
 */
 static k4a::calibration constructDeviceToDeviceCalibration(const k4a::calibration& main_cal,
     const k4a::calibration& secondary_cal,
-    const Transformation& secondary_to_main)
+    const TransformationOpenCV& secondary_to_main)
 {
     k4a::calibration cal = secondary_cal;
     k4a_calibration_extrinsics_t& ex = cal.extrinsics[K4A_CALIBRATION_TYPE_DEPTH][K4A_CALIBRATION_TYPE_COLOR];
@@ -213,7 +214,7 @@ bool findChessboardCornersHelper(const cv::Mat& main_color_image,
 * @param chessboard_pattern : size of the chessboard
 * @param chessboard_square_length : size of the border of a square in the chessboard
 */
-Transformation stereoCalibration(const k4a::calibration& main_calib,
+TransformationOpenCV stereoCalibration(const k4a::calibration& main_calib,
     const k4a::calibration& secondary_calib,
     const std::vector<std::vector<cv::Point2f>>& main_chessboard_corners_list,
     const std::vector<std::vector<cv::Point2f>>& secondary_chessboard_corners_list,
@@ -272,7 +273,7 @@ Transformation stereoCalibration(const k4a::calibration& main_calib,
 
     // Finally, we'll actually calibrate the cameras.
     // Pass secondary first, then main, because we want a transform from secondary to main.
-    Transformation tr;
+    TransformationOpenCV tr;
     double error = cv::stereoCalibrate(chessboard_corners_world_nested_for_cv,
         secondary_chessboard_corners_list,
         main_chessboard_corners_list,
@@ -358,7 +359,7 @@ static k4a_device_configuration_t getSubordinateConfig()
 * @param calibration_timeout :
 * @return
 */
-static Transformation calibrateDevices(MultiDeviceCapturer& capturer,
+static TransformationOpenCV calibrateDevices(MultiDeviceCapturer& capturer,
     const k4a_device_configuration_t& main_config,
     const k4a_device_configuration_t& secondary_config,
     const cv::Size& chessboard_pattern,
@@ -522,14 +523,49 @@ int main(int argc, char** argv)
         exit(1);
     }*/
     FileHandler fileHandler(".\\", "file");
+    fileHandler.resetFile();
+    fileHandler.registerTransformationIntoFile(0, TransformationOpenCV());
+    fileHandler.registerTransformationIntoFile(0, TransformationOpenCV(
+        cv::Matx33d(22, 10, -97, 
+            13, -25, 54, 
+            178, 245, -25), 
+        cv::Vec3d(12, 1.83, -6.37)
+    ));
 
-    fileHandler.registerTransformationIntoFile(0, Transformation());
-    std::vector<Transformation> result = fileHandler.getTransformationsFromFile();
+    fileHandler.registerTransformationIntoFile(0, TransformationOpenCV(
+        cv::Matx33d(1, 82, -97,
+            10, 20, 54,
+            14, 24, 25),
+        cv::Vec3d(2, 3, 6)
+    ));
+    //fileHandler.resetFile();
+    std::vector<TransformationOpenCV> result = fileHandler.getOpenCVTransformationsFromFile();
     int index = 0;
-    for (const Transformation& trans : result) {
+    std::cout << "OPENCV TRANSFORM" << std::endl;
+    for (const TransformationOpenCV& trans : result) {
         std::cout << "Index device : " << index++ << std::endl;
         std::cout << "Rotation matrix : " << trans.R << std::endl;
         std::cout << "Translation vector : " << trans.t << std::endl;
+    }
+
+    std::cout << "" << std::endl;
+    std::cout << "" << std::endl;
+    std::cout << "" << std::endl;
+
+    index = 0;
+    std::cout << "CLASSIC TRANSFORM" << std::endl;
+    std::vector<Transformation> result2 = fileHandler.getTransformationsFromFile();
+    for (auto& const value : result2) {
+        std::cout << "Index device : " << index++ << std::endl;
+        std::cout << "Rotation matrix :";
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                std::cout << " " << value.R[i][j];
+            }
+        }
+        std::cout << std::endl;
+
+        std::cout << "Translation vector : " << value.t[0] << " " << value.t[1] << " " << value.t[2] << std::endl;
     }
 
     return 0;

@@ -2,7 +2,7 @@
 
 FileHandler::FileHandler(std::string filePath, std::string fileName) : filePath(filePath), fileName(fileName) {}
 
-void FileHandler::registerTransformationIntoFile(int deviceIndex, Transformation tr) {
+void FileHandler::registerTransformationIntoFile(int deviceIndex, TransformationOpenCV tr) {
 	// ios::app permits to just add the datas after the one already written into the file 
 	std::ofstream file(filePath + "\\" + fileName + ".txt", std::ios::app);
 	if (file.is_open()) {
@@ -20,14 +20,13 @@ void FileHandler::registerTransformationIntoFile(int deviceIndex, Transformation
 }
 
 void FileHandler::registerTransformationIntoFile(int deviceIndex, cv::Matx33d R, cv::Vec3d t) {
-	this->registerTransformationIntoFile(deviceIndex, Transformation(R, t));
+	this->registerTransformationIntoFile(deviceIndex, TransformationOpenCV(R, t));
 }
 
 
 void FileHandler::resetFile() {
-	std::ofstream file(filePath + "\\" + fileName + ".txt", std::ios::app);
+	std::ofstream file(filePath + "\\" + fileName + ".txt", std::ofstream::out | std::ofstream::trunc);
 	if (file.is_open()) {
-		file << "";
 		file.close();
 	}
 	else {
@@ -35,8 +34,8 @@ void FileHandler::resetFile() {
 	}
  }
 
-std::vector<Transformation> FileHandler::getTransformationsFromFile() {
-	std::vector<Transformation> result;
+std::vector<TransformationOpenCV> FileHandler::getOpenCVTransformationsFromFile() {
+	std::vector<TransformationOpenCV> result;
 	std::ifstream file(filePath + "\\" + fileName + ".txt");
 	if (file) {
 		std::string line;
@@ -50,13 +49,14 @@ std::vector<Transformation> FileHandler::getTransformationsFromFile() {
 				values.push_back(std::stod(token));
 				line.erase(0, pos + 1);
 			}
+			values.push_back(std::stod(line));
 			if (values.size() > 0) {
 				cv::Matx33d Rot(
 					values[0], values[1], values[2],
 					values[3], values[4], values[5],
 					values[6], values[7], values[8]);
 				cv::Vec3d trans(values[9], values[10], values[11]);
-				result.push_back(Transformation(Rot, trans));
+				result.push_back(TransformationOpenCV(Rot, trans));
 			}
 			else {
 				std::cerr << "Error : Not enough values for a given device !" << std::endl;
@@ -70,6 +70,41 @@ std::vector<Transformation> FileHandler::getTransformationsFromFile() {
 }
 
 
-std::tuple<std::vector<float>, std::tuple<float, float, float>> FileHandler::getRotAndTransFromFile() {
+std::vector<Transformation> FileHandler::getTransformationsFromFile() {
+	std::vector<Transformation> result;
+	std::ifstream file(filePath + "\\" + fileName + ".txt");
+	if (file) {
+		std::string line;
 
+		while (getline(file, line)) {
+			int pos = 0;
+			std::string token;
+			std::vector<double> values;
+			Transformation trans;
+			while ((pos = line.find(" ")) != std::string::npos) {
+				token = line.substr(0, pos);
+				values.push_back(std::stod(token));
+				line.erase(0, pos + 1);
+			}
+			values.push_back(std::stod(line));
+			if (values.size() > 0) {
+				std::vector<double> rot;
+				for (int i = 0; i < 9; i++) {
+					rot.push_back(values[i]);
+				}
+				trans.setRotationMatrix(rot);
+				trans.t[0] = values[9];
+				trans.t[1] = values[10];
+				trans.t[2] = values[11];
+				result.push_back(trans);
+			}
+			else {
+				std::cerr << "Error : Not enough values for a given device !" << std::endl;
+			}
+		}
+	}
+	else {
+		std::cerr << "Error : Could not open file !" << std::endl;
+	}
+	return result;
 }
