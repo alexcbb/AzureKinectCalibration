@@ -5,14 +5,23 @@
 #include "TransformationOpenCV.h"
 #include "Transformation.h"
 
+/**
+* class FileHandler
+* 
+* This class aims to be able to write OpenCV transformations obtained after calibration into a '.txt' file.
+* It also permits to read the file in order to get the Transformations into OpenCV and also classical C++ format.
+*/
 class FileHandler
 {
 public:
 	FileHandler() : filePath(".\\"), fileName("file") {};
 	FileHandler(std::string filePath, std::string fileName);
 
+	// Write Transformation into file
 	void registerTransformationIntoFile(TransformationOpenCV tr);
 	void registerTransformationIntoFile(cv::Matx33d R, cv::Vec3d t);
+
+	// Reset file
 	void resetFile();
 
 	/**
@@ -33,7 +42,6 @@ public:
 	void setFilePath(std::string filePath) {
 		this->filePath = filePath;
 	}
-
 	void setFileName(std::string fileName) {
 		this->fileName = fileName;
 	}

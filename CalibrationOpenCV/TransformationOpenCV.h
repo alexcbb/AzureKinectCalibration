@@ -4,6 +4,12 @@
 
 #include <opencv2/core.hpp>
 
+/**
+* struct TransformationOpenCV
+*
+* This struct aims to work like the Transformation struct (cf. Transformation.h), but with OpenCV structures instead of classical
+* C++ ones.
+*/
 struct TransformationOpenCV
 {
     cv::Matx33d R;
@@ -14,7 +20,6 @@ struct TransformationOpenCV
 
     TransformationOpenCV(cv::Matx33d Rot, cv::Vec3d trans) : R(Rot), t(trans) {}
 
-    // Construct from H
     TransformationOpenCV(const cv::Matx44d& H) : R(H.get_minor<3, 3>(0, 0)), t(H(0, 3), H(1, 3), H(2, 3)) {}
 
     // Create homogeneous matrix from this transformation

@@ -1,9 +1,18 @@
 #pragma once
 #include <vector>
 
+/**
+* struct Transformation
+* 
+* This struct contains a matrix and an array of doubles representing the 
+* transformation of a camera to another with the matrix of rotation and 
+* the vector of translation (extrinsinc parameters)
+*/
 struct Transformation
 {
+    // Rotation matrix 
     double R[3][3];
+    // Translation vector
     double t[3];
 
     // Construct an identity transformation.
