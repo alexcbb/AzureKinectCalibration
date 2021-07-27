@@ -377,10 +377,9 @@ int main(int argc, char** argv)
     cv::Size chessboard_pattern(6, 9);
     double calibration_timeout = 60.0;
     uint32_t num_devices = k4a::device::get_installed_count();
-    FileHandler fileHandler;
-    if (argv[1] && argv[2]) {
+    FileHandler fileHandler(".\\EventByEleven\\Calibration\\CamCalib.txt");
+    if (argv[1]) {
         fileHandler.setFilePath(argv[1]);
-        fileHandler.setFileName(argv[2]);
     }
 
     std::vector<uint32_t> device_indices;
@@ -397,8 +396,9 @@ int main(int argc, char** argv)
 
     // Start all opened devices
     capturer.startDevices(mainConfig, secondaryConfig);
-
+    fileHandler.resetFile();
     if (num_devices > 1 ){
+        TransformationOpenCV lastTransfo;
         for (int i = 0; i < num_devices - 1; i++) {
             TransformationOpenCV transfSecToMain = calibrateDevices(capturer,
                 mainConfig,
@@ -406,6 +406,10 @@ int main(int argc, char** argv)
                 chessboard_pattern,
                 chessboard_square_length,
                 calibration_timeout, i, i+1);
+            if (i > 0) {
+                transfSecToMain = transfSecToMain.compose_with(lastTransfo);
+            }
+            lastTransfo = transfSecToMain;
             fileHandler.registerTransformationIntoFile(transfSecToMain);
         }
     } 
@@ -414,6 +418,7 @@ int main(int argc, char** argv)
         std::cerr << "Invalid number of devices! (must be more than 1)" << std::endl;
         exit(1);
     }
+    capturer.closeDevices();
 
     return 0;
 }

@@ -51,12 +51,17 @@ struct TransformationOpenCV
     // Construct a transformation equivalent to this transformation followed by the second transformation
     TransformationOpenCV compose_with(const TransformationOpenCV& second_transformation) const
     {
+        std::cout << "WE COMPOSE !" << std::endl;
         // get this transform
         cv::Matx44d H_1 = to_homogeneous();
         // get the transform to be composed with this one
         cv::Matx44d H_2 = second_transformation.to_homogeneous();
+
+        std::cout << "First one : " << H_1 << std::endl;
+        std::cout << "Second one : " << H_2 << std::endl;
         // get the combined transform
         cv::Matx44d H_3 = H_1 * H_2;
+        std::cout << "Result : " << H_3 << std::endl;
         return TransformationOpenCV(H_3);
     }
 };

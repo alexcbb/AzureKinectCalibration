@@ -1,17 +1,17 @@
 #include "FileHandler.h"
 
-FileHandler::FileHandler(std::string filePath, std::string fileName) : filePath(filePath), fileName(fileName) {}
+FileHandler::FileHandler(std::string filePath) : filePath(filePath) {}
 
 void FileHandler::registerTransformationIntoFile(TransformationOpenCV tr) {
 	// ios::app permits to just add the datas after the one already written into the file 
-	std::ofstream file(filePath + "\\" + fileName + ".txt", std::ios::app);
+	std::ofstream file(filePath, std::ios::app);
 	if (file.is_open()) {
 		// Each line corresponds to one device, beginning from the device 0; Format for each device : 
 		// [r11] [r12] [r13], .... [r32] [r33]; [tx] [ty] [tz]  
 		file << tr.R(0, 0) << " " << tr.R(0, 1) << " " << tr.R(0, 2) << " "
 			<< tr.R(1, 0) << " " << tr.R(1, 1) << " " << tr.R(1, 2) << " "
 			<< tr.R(2, 0) << " " << tr.R(2, 1) << " " << tr.R(2, 2) << "; "
-			<< tr.t[0] << " " << tr.t[1] << " " << tr.t[2] << std::endl;
+			<< tr.t[0] << " " << tr.t[1] << " " << tr.t[2] << "\n";
 		file.close();
 	}
 	else {
@@ -25,7 +25,7 @@ void FileHandler::registerTransformationIntoFile(cv::Matx33d R, cv::Vec3d t) {
 
 
 void FileHandler::resetFile() {
-	std::ofstream file(filePath + "\\" + fileName + ".txt", std::ofstream::out | std::ofstream::trunc);
+	std::ofstream file(filePath, std::ofstream::out | std::ofstream::trunc);
 	if (file.is_open()) {
 		file.close();
 	}
@@ -36,7 +36,7 @@ void FileHandler::resetFile() {
 
 std::vector<TransformationOpenCV> FileHandler::getOpenCVTransformationsFromFile() {
 	std::vector<TransformationOpenCV> result;
-	std::ifstream file(filePath + "\\" + fileName + ".txt");
+	std::ifstream file(filePath);
 	if (file) {
 		std::string line;
 
@@ -71,7 +71,7 @@ std::vector<TransformationOpenCV> FileHandler::getOpenCVTransformationsFromFile(
 
 std::vector<Transformation> FileHandler::getTransformationsFromFile() {
 	std::vector<Transformation> result;
-	std::ifstream file(filePath + "\\" + fileName + ".txt");
+	std::ifstream file(filePath);
 	if (file) {
 		std::string line;
 

@@ -14,8 +14,8 @@
 class FileHandler
 {
 public:
-	FileHandler() : filePath(".\\"), fileName("file") {};
-	FileHandler(std::string filePath, std::string fileName);
+	FileHandler() : filePath(".\\CamCalib.txt"){};
+	FileHandler(std::string filePath);
 
 	// Write Transformation into file
 	void registerTransformationIntoFile(TransformationOpenCV tr);
@@ -42,12 +42,8 @@ public:
 	void setFilePath(std::string filePath) {
 		this->filePath = filePath;
 	}
-	void setFileName(std::string fileName) {
-		this->fileName = fileName;
-	}
 
 private:
 	std::string filePath;
-	std::string fileName;
 };
 

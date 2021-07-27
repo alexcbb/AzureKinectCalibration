@@ -326,6 +326,17 @@ public:
         return subordinate_devices[i];
     }
 
+    void closeDevices() {
+        master_device.stop_cameras();
+        master_device.close();
+        master_device = nullptr;
+        for (auto& device : subordinate_devices) {
+            device.stop_cameras();
+            device.close();
+            device = nullptr;
+        }
+    }
+
 private:
     // Once the constuctor finishes, devices[0] will always be the master
     k4a::device master_device;
